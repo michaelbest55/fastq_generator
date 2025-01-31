@@ -1,0 +1,60 @@
+[package]
+name = "fastq-generator"
+version = "0.1.0"
+edition = "2021"
+authors = [
+	"Michael Best <michaelbest55@gmail.com>",
+]
+include = [
+	"src/**/*",
+	"Cargo.toml",
+	"README.md"
+]
+description = ""
+repository = "https://github.com/michaelbest55/fastq-generator"
+documentation = "https://docs.rs/fastq-generator/"
+keywords = []
+categories = ["command-line-utilities"]
+license = "MIT OR Apache-2.0"
+license-file = "LICENSE"
+readme = "README.md"
+
+[badges]
+is-it-maintained-issue-resolution = { repository = "michaelbest55/fastq-generator" }
+is-it-maintained-open-issues = { repository = "michaelbest55/fastq-generator" }
+
+maintenance = {status = "actively-developed"}
+
+[dependencies]
+clap = { version = "4.5", features = ["cargo"] }
+rand = "0.8"
+tempfile = "3.8"
+
+[build-dependencies]
+clap = { version = "4.5", features = ["cargo"] }
+
+[features]
+default     = ["std"]
+std         = [] # support for no_std in a backwards-compatible way
+debug       = [] # Enables debug messages
+doc         = [] # All the features which add to documentation
+
+[profile.dev]
+debug = true
+
+[profile.test]
+opt-level = 1
+debug = true
+
+[profile.bench]
+lto = true
+codegen-units = 1
+
+[package.metadata.docs.rs]
+features = ["doc"]
+targets = ["x86_64-unknown-linux-gnu"]
+
+[[bin]]
+name = "fastq_generator"
+path = "src/fastq_generator.rs"
+
