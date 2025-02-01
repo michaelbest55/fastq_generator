@@ -634,17 +634,41 @@ mod tests {
         );
     }
 
-    fn create_test_fasta(temp_file: &mut NamedTempFile) -> io::Result<()> {
-        let fasta_content = ">seq1\nACGTACGTACGT\n\
-                            >seq2\nTGCATGCATGCA\n\
-                            >seq3\nGCTAGCTAGCTA\n\
-                            >seq4\nCGATCGATCGAT\n\
-                            >seq5\nTACGTACGTACG\n\
-                            >seq6\nGTACGTACGTAC\n\
-                            >seq7\nCTAGCTAGCTAG\n\
-                            >seq8\nATCGATCGATCG\n\
-                            >seq9\nCGTACGTACGTA\n\
-                            >seq10\nGATCGATCGATC\n";
+    // fn create_test_fasta(temp_file: &mut NamedTempFile) -> io::Result<()> {
+    //     let fasta_content = ">seq1\nACGTACGTACGT\n\
+
+    //                         >seq2\nTGCATGCATGCA\n\
+    //                         >seq3\nGCTAGCTAGCTA\n\
+    //                         >seq4\nCGATCGATCGAT\n\
+    //                         >seq5\nTACGTACGTACG\n\
+    //                         >seq6\nGTACGTACGTAC\n\
+    //                         >seq7\nCTAGCTAGCTAG\n\
+    //                         >seq8\nATCGATCGATCG\n\
+    //                         >seq9\nCGTACGTACGTA\n\
+    //                         >seq10\nGATCGATCGATC\n";
+
+    //     // Write content to provided temporary file
+    //     temp_file
+    //         .as_file_mut()
+    //         .write_all(fasta_content.as_bytes())?;
+
+    //     Ok(())
+    // }
+    fn create_test_fasta(
+        temp_file: &mut NamedTempFile,
+        num_seq: usize,
+        seq_length: usize,
+    ) -> io::Result<()> {
+        let nucleotides = ['A', 'C', 'G', 'T'];
+        let mut rng = rand::thread_rng();
+        let mut fasta_content = String::new();
+
+        for i in 1..=num_seq {
+            let sequence: String = (0..seq_length)
+                .map(|_| *nucleotides.choose(&mut rng).unwrap())
+                .collect();
+            fasta_content.push_str(&format!(">seq{}\n{}\n", i, sequence));
+        }
 
         // Write content to provided temporary file
         temp_file
@@ -660,7 +684,7 @@ mod tests {
         let mut temp_file = NamedTempFile::new().unwrap();
 
         // Populate the file with test data
-        create_test_fasta(&mut temp_file).unwrap();
+        create_test_fasta(&mut temp_file, 10, 12).unwrap();
 
         let sequence_size = 10;
         let coverage = 2;
@@ -681,7 +705,7 @@ mod tests {
         let mut temp_file = NamedTempFile::new().unwrap();
 
         // Populate the file with test data
-        create_test_fasta(&mut temp_file).unwrap();
+        create_test_fasta(&mut temp_file, 10, 12).unwrap();
 
         let sequence_size = 10;
         let coverage = 2;
@@ -714,7 +738,7 @@ mod tests {
         let mut temp_file = NamedTempFile::new().unwrap();
 
         // Populate the file with test data
-        create_test_fasta(&mut temp_file).unwrap();
+        create_test_fasta(&mut temp_file, 10, 12).unwrap();
 
         let sequence_size = 10;
         let insertion_size = 5;
@@ -737,7 +761,7 @@ mod tests {
         let mut temp_file = NamedTempFile::new().unwrap();
 
         // Populate the file with test data
-        create_test_fasta(&mut temp_file).unwrap();
+        create_test_fasta(&mut temp_file, 10, 36).unwrap();
 
         let sequence_size = 10;
         let insertion_size = 5;
@@ -761,7 +785,6 @@ mod tests {
 
         // Read the content of the file
         let content = fs::read_to_string(&temp_output_path).unwrap();
-
         // Add assertions to check the content
         assert!(content.starts_with("@"), "FASTQ file should start with @");
     }

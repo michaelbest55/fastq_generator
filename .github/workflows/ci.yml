@@ -34,7 +34,7 @@ jobs:
     name: Test
     strategy:
       matrix:
-        build: [linux, windows, mac, minimal, default, next]
+        build: [linux, windows, mac, minimal, next]
         include:
         - build: linux
           os: buildjet-8vcpu-ubuntu-2204
