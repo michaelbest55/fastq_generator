@@ -310,6 +310,8 @@ fn add_coverage_arg(mut cmd: Command) -> Command {
     cmd = cmd.arg(
         Arg::new("coverage")
             .required(true)
+            .long("coverage")
+            .short('c')
             .value_parser(clap::value_parser!(usize))
             .help("Desired coverage"),
     );
@@ -320,6 +322,8 @@ fn add_ref_fasta_arg(mut cmd: Command) -> Command {
     cmd = cmd.arg(
         Arg::new("ref_fasta")
             .required(true)
+            .long("ref_fasta")
+            .short('r')
             .help("Reference FASTA file"),
     );
     cmd

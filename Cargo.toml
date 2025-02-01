@@ -14,7 +14,7 @@ description = ""
 repository = "https://github.com/michaelbest55/fastq-generator"
 documentation = "https://docs.rs/fastq-generator/"
 keywords = []
-categories = ["command-line-utilities"]
+categories = ["command-line-utilities", "bioinformatics"]
 license = "MIT"
 readme = "README.md"
 
@@ -39,6 +39,7 @@ debug       = [] # Enables debug messages
 doc         = [] # All the features which add to documentation
 
 [profile.dev]
+opt-level = 0
 debug = true
 
 [profile.test]
@@ -48,6 +49,9 @@ debug = true
 [profile.bench]
 lto = true
 codegen-units = 1
+
+[profile.release]
+opt-level = 3
 
 [package.metadata.docs.rs]
 features = ["doc"]
