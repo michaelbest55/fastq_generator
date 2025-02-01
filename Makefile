@@ -19,9 +19,6 @@ _FEATURES_next = ${_FEATURES_default} --features unstable-v5
 _FEATURES_debug = ${_FEATURES_default} --features debug
 _FEATURES_release = ${_FEATURES_default} --release
 
-check-wasm:
-	cargo check ${_FEATURES_${@:check-%=%}} ${ARGS}
-
 check-%:
 	cargo check ${_FEATURES_${@:check-%=%}} --all-targets ${ARGS}
 

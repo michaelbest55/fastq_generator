@@ -81,20 +81,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        build: [msrv, wasm, wasm-wasi, debug, release]
+        build: [msrv, debug, release]
         include:
           - build: msrv
             rust: "1.74"  # MSRV
             target: x86_64-unknown-linux-gnu
             features: full
-          - build: wasm
-            rust: stable
-            target: wasm32-unknown-unknown
-            features: wasm
-          - build: wasm-wasi
-            rust: stable
-            target: wasm32-wasip1
-            features: wasm
           - build: debug
             rust: stable
             target: x86_64-unknown-linux-gnu
