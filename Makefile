@@ -15,7 +15,6 @@ STABLE?=1.84
 _FEATURES = minimal default debug release
 _FEATURES_minimal = --no-default-features --features "std"
 _FEATURES_default =
-_FEATURES_next = ${_FEATURES_default} --features unstable-v5
 _FEATURES_debug = ${_FEATURES_default} --features debug
 _FEATURES_release = ${_FEATURES_default} --release
 
@@ -30,9 +29,6 @@ test-%:
 
 clippy-%:
 	cargo clippy ${_FEATURES_${@:clippy-%=%}} ${ARGS} --all-targets -- -D warnings -A deprecated
-
-test-ui-%:
-	cargo +${STABLE} test --test derive_ui --features derive,unstable-derive-ui-tests ${_FEATURES_${@:test-ui-%=%}}
 
 doc:
 	cargo doc --workspace --all-features --no-deps --document-private-items
