@@ -10,8 +10,6 @@ use std::process;
 enum OutputDest {
     Stdout(BufWriter<io::Stdout>),
     File(BufWriter<File>),
-    #[cfg(test)]
-    TestBuffer(Vec<u8>),
 }
 
 impl Write for OutputDest {
@@ -466,7 +464,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
 #[cfg(test)]
 mod tests {
-    use std::{fs, io::Write, path::Path};
+    use std::{fs, io::Write};
 
     use tempfile::NamedTempFile;
 

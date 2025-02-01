@@ -56,3 +56,6 @@ targets = ["x86_64-unknown-linux-gnu"]
 [[bin]]
 name = "fastq_generator"
 path = "src/fastq_generator.rs"
+
+[workspace.metadata.cargo-clippy]
+args = ["--all-targets", "--", "-D", "warnings", "-A", "deprecated"]
