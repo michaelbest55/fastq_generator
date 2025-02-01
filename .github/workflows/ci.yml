@@ -34,7 +34,7 @@ jobs:
     name: Test
     strategy:
       matrix:
-        build: [linux, windows, mac, minimal, next]
+        build: [linux, windows, mac, minimal]
         include:
         - build: linux
           os: ubuntu-22.04
