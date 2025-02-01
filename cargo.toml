@@ -15,8 +15,7 @@ repository = "https://github.com/michaelbest55/fastq-generator"
 documentation = "https://docs.rs/fastq-generator/"
 keywords = []
 categories = ["command-line-utilities"]
-license = "MIT OR Apache-2.0"
-license-file = "LICENSE"
+license = "MIT"
 readme = "README.md"
 
 [badges]

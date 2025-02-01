@@ -1,6 +1,5 @@
----
-on: pull_request
 name: PR Lints
+on: pull_request
 jobs:
   lints:
     runs-on: ubuntu-latest
