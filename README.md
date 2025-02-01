@@ -77,7 +77,6 @@ fastq_generator generate_mapped_fastq_pe --ref-fasta path/to/reference.fasta --s
 
 This crate is licensed under [MIT license](http://opensource.org/licenses/MIT).
 
-
 [//]: # (badges)
 
 [rustc-image]: https://img.shields.io/badge/rustc-1.53+-blue.svg
