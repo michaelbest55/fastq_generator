@@ -1,10 +1,10 @@
-use clap::{Command, Arg};
+use clap::{Arg, Command};
 use rand::seq::SliceRandom;
 use std::error::Error;
 use std::fs::File;
 use std::io::{self, BufRead, BufReader, BufWriter, Write};
-use std::process;
 use std::path::PathBuf;
+use std::process;
 
 /// Represents where output should be written
 enum OutputDest {
@@ -38,6 +38,7 @@ impl OutputDest {
         }
     }
 
+    #[allow(dead_code)]
     fn write_all(&mut self, buf: &[u8]) -> io::Result<()> {
         match self {
             OutputDest::Stdout(writer) => writer.write_all(buf),
@@ -51,7 +52,7 @@ impl OutputDest {
 /// and within the FASTQ generation functions
 fn reverse_complement(sequence: &str) -> String {
     let sequence = sequence.to_uppercase();
-    
+
     let complement: String = sequence
         .chars()
         .map(|base| match base {
@@ -62,7 +63,7 @@ fn reverse_complement(sequence: &str) -> String {
             other => other,
         })
         .collect();
-    
+
     complement.chars().rev().collect()
 }
 
@@ -93,13 +94,11 @@ fn process_reverse_complement(input: Option<PathBuf>, output: Option<PathBuf>) -
 fn generate_dna(sequence_size: usize) -> String {
     let nucleotides = ['A', 'C', 'G', 'T'];
     let mut rng = rand::thread_rng();
-    
+
     (0..sequence_size)
         .map(|_| *nucleotides.choose(&mut rng).unwrap())
         .collect()
 }
-
-
 
 /// Generates and prints a FASTA format sequence
 fn generate_fasta(sequence_size: usize, nb_seq: usize, mut output: OutputDest) -> io::Result<()> {
@@ -130,7 +129,11 @@ fn generate_fastq(sequence_size: usize, nb_seq: usize, mut output: OutputDest) -
 }
 
 /// Generates random single-end FASTQ sequences
-fn generate_random_fastq_se(sequence_size: usize, nb_seq: usize, mut output: OutputDest) -> io::Result<()> {
+fn generate_random_fastq_se(
+    sequence_size: usize,
+    nb_seq: usize,
+    mut output: OutputDest,
+) -> io::Result<()> {
     for index in 1..=nb_seq {
         let sequence = generate_dna(sequence_size);
         let header = format!(
@@ -143,24 +146,22 @@ fn generate_random_fastq_se(sequence_size: usize, nb_seq: usize, mut output: Out
 }
 
 /// Generates random paired-end FASTQ sequences
-fn generate_random_fastq_pe(sequence_size: usize, nb_seq: usize, mut output: OutputDest) -> io::Result<()> {
+fn generate_random_fastq_pe(
+    sequence_size: usize,
+    nb_seq: usize,
+    mut output: OutputDest,
+) -> io::Result<()> {
     // Generate first reads
     for index in 1..=nb_seq {
         let sequence = generate_dna(sequence_size);
-        let header = format!(
-            "@FAKE-SEQ:1:FAKE-FLOWCELL-ID:1:1:0:{}#0/1",
-            index
-        );
+        let header = format!("@FAKE-SEQ:1:FAKE-FLOWCELL-ID:1:1:0:{}#0/1", index);
         generate_fastq_seq(&sequence, &header, &mut output)?;
     }
-    
+
     // Generate second reads
     for index in 1..=nb_seq {
         let sequence = generate_dna(sequence_size);
-        let header = format!(
-            "@FAKE-SEQ:1:FAKE-FLOWCELL-ID:1:1:0:{}#0/2",
-            index
-        );
+        let header = format!("@FAKE-SEQ:1:FAKE-FLOWCELL-ID:1:1:0:{}#0/2", index);
         generate_fastq_seq(&sequence, &header, &mut output)?;
     }
     output.flush()
@@ -176,7 +177,7 @@ fn generate_mapped_fastq_se(
     let file = File::open(ref_fasta)?;
     let reader = BufReader::new(file);
     let mut sequences = Vec::new();
-    
+
     // Read sequences from FASTA file
     for line in reader.lines() {
         let line = line?;
@@ -184,17 +185,17 @@ fn generate_mapped_fastq_se(
             sequences.push(line.trim().to_string());
         }
     }
-    
+
     let mut index = 1;
-    
+
     // Generate reads for each coverage level
     for coverage_level in 1..=coverage {
         for sequence in &sequences {
             let mut start = coverage_level - 1;
-            
+
             while start + sequence_size < sequence.len() {
                 let kmer = &sequence[start..start + sequence_size];
-                
+
                 writeln!(
                     output,
                     "@FAKE-SEQ:1:FAKE-FLOWCELL-ID:1:1:0:{} 1:N:0:ATGT",
@@ -203,13 +204,13 @@ fn generate_mapped_fastq_se(
                 writeln!(output, "{}", kmer)?;
                 writeln!(output, "+")?;
                 writeln!(output, "{}", "I".repeat(sequence_size))?;
-                
+
                 start += sequence_size;
                 index += 1;
             }
         }
     }
-    
+
     output.flush()?;
     Ok(())
 }
@@ -225,7 +226,7 @@ fn generate_mapped_fastq_pe(
     let file = File::open(ref_fasta)?;
     let reader = BufReader::new(file);
     let mut sequences = Vec::new();
-    
+
     // Read sequences from FASTA file
     for line in reader.lines() {
         let line = line?;
@@ -233,54 +234,46 @@ fn generate_mapped_fastq_pe(
             sequences.push(line.trim().to_string());
         }
     }
-    
+
     // First pass: generate and store all kmers
     let mut kmers = Vec::new();
-    
+
     for coverage_level in 1..=coverage {
         for sequence in &sequences {
             let mut start = coverage_level - 1;
-            
+
             while start + sequence_size * 2 + insertion_size < sequence.len() {
                 // Forward read
                 let kmer1 = &sequence[start..start + sequence_size];
-                
+
                 // Reverse read
                 let kmer2_start = start + sequence_size + insertion_size;
                 let kmer2 = &sequence[kmer2_start..kmer2_start + sequence_size];
                 let kmer2_rc = reverse_complement(kmer2);
-                
+
                 kmers.push((kmer1.to_string(), kmer2_rc));
-                
+
                 start += (sequence_size * 2) + insertion_size;
             }
         }
     }
-    
+
     // Write forward reads
     for (i, (kmer1, _)) in kmers.iter().enumerate() {
-        writeln!(
-            output,
-            "@FAKE-SEQ:1:FAKE-FLOWCELL-ID:1:1:0:{}#0/1",
-            i + 1
-        )?;
+        writeln!(output, "@FAKE-SEQ:1:FAKE-FLOWCELL-ID:1:1:0:{}#0/1", i + 1)?;
         writeln!(output, "{}", kmer1)?;
         writeln!(output, "+")?;
         writeln!(output, "{}", "I".repeat(sequence_size))?;
     }
-    
+
     // Write reverse reads
     for (i, (_, kmer2)) in kmers.iter().enumerate() {
-        writeln!(
-            output,
-            "@FAKE-SEQ:1:FAKE-FLOWCELL-ID:1:1:0:{}#0/2",
-            i + 1
-        )?;
+        writeln!(output, "@FAKE-SEQ:1:FAKE-FLOWCELL-ID:1:1:0:{}#0/2", i + 1)?;
         writeln!(output, "{}", kmer2)?;
         writeln!(output, "+")?;
         writeln!(output, "{}", "I".repeat(sequence_size))?;
     }
-    
+
     output.flush()?;
     Ok(())
 }
@@ -298,7 +291,7 @@ fn add_sequence_size_arg(mut cmd: Command) -> Command {
             .short('s')
             .required(true)
             .value_parser(clap::value_parser!(usize))
-            .help("Length of each generated sequence")
+            .help("Length of each generated sequence"),
     );
     cmd
 }
@@ -310,7 +303,7 @@ fn add_nb_seq_arg(mut cmd: Command) -> Command {
             .long("nb_seq")
             .short('n')
             .value_parser(clap::value_parser!(usize))
-            .help("Number of sequences to generate")
+            .help("Number of sequences to generate"),
     );
     cmd
 }
@@ -320,7 +313,7 @@ fn add_coverage_arg(mut cmd: Command) -> Command {
         Arg::new("coverage")
             .required(true)
             .value_parser(clap::value_parser!(usize))
-            .help("Desired coverage")
+            .help("Desired coverage"),
     );
     cmd
 }
@@ -329,7 +322,7 @@ fn add_ref_fasta_arg(mut cmd: Command) -> Command {
     cmd = cmd.arg(
         Arg::new("ref_fasta")
             .required(true)
-            .help("Reference FASTA file")
+            .help("Reference FASTA file"),
     );
     cmd
 }
@@ -342,7 +335,7 @@ fn add_output_arg(cmd: Command) -> Command {
             .short('o')
             .value_name("FILE")
             .help("Output file path (defaults to stdout)")
-            .value_parser(clap::value_parser!(PathBuf))
+            .value_parser(clap::value_parser!(PathBuf)),
     )
 }
 
@@ -351,82 +344,49 @@ fn main() -> Result<(), Box<dyn Error>> {
         .version("1.0")
         .author("Michael Best")
         .about("DNA sequence manipulation and FASTQ generation tools")
-        .subcommand(
-            add_output_arg(
-                Command::new("reverse_complement")
+        .subcommand(add_output_arg(
+            Command::new("reverse_complement")
+                .arg(
+                    Arg::new("input")
+                        .long("input")
+                        .short('i')
+                        .value_name("FILE")
+                        .help("Input file path (defaults to stdin)")
+                        .value_parser(clap::value_parser!(PathBuf)),
+                )
+                .about("Generates reverse complement of DNA sequences from stdin"),
+        ))
+        .subcommand(add_output_arg(add_sequence_size_arg(add_nb_seq_arg(
+            Command::new("generate_fasta").about("Creates a de novo fasta file"),
+        ))))
+        .subcommand(add_output_arg(add_nb_seq_arg(add_sequence_size_arg(
+            Command::new("generate_fastq").about("Creates a de novo fastq file"),
+        ))))
+        .subcommand(add_output_arg(add_nb_seq_arg(add_sequence_size_arg(
+            Command::new("generate_random_fastq_se").about("Generates random single-end reads"),
+        ))))
+        .subcommand(add_output_arg(add_nb_seq_arg(add_sequence_size_arg(
+            Command::new("generate_random_fastq_pe").about("Generates random paired-end reads"),
+        ))))
+        .subcommand(add_output_arg(add_coverage_arg(add_sequence_size_arg(
+            add_ref_fasta_arg(
+                Command::new("generate_mapped_fastq_se").about("Generates mapped single-end reads"),
+            ),
+        ))))
+        .subcommand(add_output_arg(add_coverage_arg(add_sequence_size_arg(
+            add_ref_fasta_arg(
+                Command::new("generate_mapped_fastq_pe")
+                    .about("Generates mapped paired-end reads")
                     .arg(
-                        Arg::new("input")
-                            .long("input")
+                        Arg::new("insertion_size")
+                            .long("insertion-size")
                             .short('i')
-                            .value_name("FILE")
-                            .help("Input file path (defaults to stdin)")
-                            .value_parser(clap::value_parser!(PathBuf))
-                    )
-                    .about("Generates reverse complement of DNA sequences from stdin")
-            )
-        )
-        .subcommand(
-            add_output_arg(
-                add_sequence_size_arg(
-                    add_nb_seq_arg(
-                        Command::new("generate_fasta")
-                            .about("Creates a de novo fasta file")
-                    )
-                )
-            )
-        )
-        .subcommand(
-            add_output_arg(
-                add_nb_seq_arg(
-                    add_sequence_size_arg(
-                        Command::new("generate_random_fastq_se")
-                            .about("Generates random single-end reads")
-                    )
-                )
-            )
-        )
-        .subcommand(
-            add_output_arg(
-                add_nb_seq_arg(
-                    add_sequence_size_arg(
-                        Command::new("generate_random_fastq_pe")
-                            .about("Generates random paired-end reads")
-                    )
-                )
-            )
-        )
-        .subcommand(
-            add_output_arg(
-                add_coverage_arg(
-                    add_sequence_size_arg(
-                        add_ref_fasta_arg(
-                            Command::new("generate_mapped_fastq_se")
-                                .about("Generates mapped single-end reads")
-                        )
-                    )
-                )
-            )
-        )
-        .subcommand(
-            add_output_arg(
-                add_coverage_arg(
-                    add_sequence_size_arg(
-                        add_ref_fasta_arg(
-                            Command::new("generate_mapped_fastq_pe")
-                                .about("Generates mapped paired-end reads")
-                                .arg(
-                                    Arg::new("insertion_size")
-                                        .long("insertion-size")
-                                        .short('i')
-                                        .required(true)
-                                        .value_parser(clap::value_parser!(usize))
-                                        .help("Size of insertion")
-                                )
-                        )
-                    )
-                )
-            )
-        )
+                            .required(true)
+                            .value_parser(clap::value_parser!(usize))
+                            .help("Size of insertion"),
+                    ),
+            ),
+        ))))
         .get_matches();
 
     match matches.subcommand() {
@@ -443,6 +403,15 @@ fn main() -> Result<(), Box<dyn Error>> {
             let output_path = sub_m.get_one::<PathBuf>("output").cloned();
             let output = OutputDest::new(output_path)?;
             if let Err(e) = generate_fasta(sequence_size, nb_seq, output) {
+                exit_with_error(&e.to_string());
+            }
+        }
+        Some(("generate_fastq", sub_m)) => {
+            let sequence_size = *sub_m.get_one::<usize>("sequence_size").unwrap();
+            let nb_seq = *sub_m.get_one::<usize>("nb_seq").unwrap();
+            let output_path = sub_m.get_one::<PathBuf>("output").cloned();
+            let output = OutputDest::new(output_path)?;
+            if let Err(e) = generate_fastq(sequence_size, nb_seq, output) {
                 exit_with_error(&e.to_string());
             }
         }
@@ -481,11 +450,15 @@ fn main() -> Result<(), Box<dyn Error>> {
             let coverage = *sub_m.get_one::<usize>("coverage").unwrap();
             let output_path = sub_m.get_one::<PathBuf>("output").cloned();
             let output = OutputDest::new(output_path)?;
-            if let Err(e) = generate_mapped_fastq_pe(ref_fasta, sequence_size, insertion_size, coverage, output) {
+            if let Err(e) =
+                generate_mapped_fastq_pe(ref_fasta, sequence_size, insertion_size, coverage, output)
+            {
                 exit_with_error(&e.to_string());
             }
         }
-        _ => exit_with_error("Please specify a valid subcommand. Use --help for usage information."),
+        _ => {
+            exit_with_error("Please specify a valid subcommand. Use --help for usage information.")
+        }
     }
 
     Ok(())
@@ -493,7 +466,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
 #[cfg(test)]
 mod tests {
-    use std::{fs, path::Path, io::Write};
+    use std::{fs, io::Write, path::Path};
 
     use tempfile::NamedTempFile;
 
@@ -526,7 +499,6 @@ mod tests {
         assert!(dna.chars().all(|c| ['A', 'C', 'G', 'T'].contains(&c)));
     }
 
-
     #[test]
     fn test_generate_fasta_stdout() {
         let sequence_size = 10;
@@ -544,18 +516,22 @@ mod tests {
         let temp_file = NamedTempFile::new().unwrap();
         let temp_path = temp_file.path().to_owned();
 
-            // Create OutputDest with the temporary file path
+        // Create OutputDest with the temporary file path
         let output = OutputDest::new(Some(temp_path.clone())).unwrap();
         generate_fasta(sequence_size, nb_seq, output).unwrap();
-        
+
         assert!(temp_path.exists(), "Temporary file was not created");
-        
+
         // Read the content of the file
         let content = fs::read_to_string(&temp_path).unwrap();
 
         // Add assertions to check the content
         assert!(content.starts_with(">"), "FASTA file should start with >");
-        assert_eq!(content.lines().count(), nb_seq * 2, "Incorrect number of lines in FASTA file");
+        assert_eq!(
+            content.lines().count(),
+            nb_seq * 2,
+            "Incorrect number of lines in FASTA file"
+        );
     }
 
     #[test]
@@ -585,7 +561,11 @@ mod tests {
 
         // Add assertions to check the content
         assert!(content.starts_with("@"), "FASTQ file should start with @");
-        assert_eq!(content.lines().count(), nb_seq * 4, "Incorrect number of lines in FASTQ file");
+        assert_eq!(
+            content.lines().count(),
+            nb_seq * 4,
+            "Incorrect number of lines in FASTQ file"
+        );
     }
 
     #[test]
@@ -615,7 +595,11 @@ mod tests {
 
         // Add assertions to check the content
         assert!(content.starts_with("@"), "FASTQ file should start with @");
-        assert_eq!(content.lines().count(), nb_seq * 4, "Incorrect number of lines in FASTQ file");
+        assert_eq!(
+            content.lines().count(),
+            nb_seq * 4,
+            "Incorrect number of lines in FASTQ file"
+        );
     }
 
     #[test]
@@ -645,9 +629,12 @@ mod tests {
 
         // Add assertions to check the content
         assert!(content.starts_with("@"), "FASTQ file should start with @");
-        assert_eq!(content.lines().count(), nb_seq * 8, "Incorrect number of lines in FASTQ file");
+        assert_eq!(
+            content.lines().count(),
+            nb_seq * 8,
+            "Incorrect number of lines in FASTQ file"
+        );
     }
-
 
     fn create_test_fasta(temp_file: &mut NamedTempFile) -> io::Result<()> {
         let fasta_content = ">seq1\nACGTACGTACGT\n\
@@ -660,18 +647,20 @@ mod tests {
                             >seq8\nATCGATCGATCG\n\
                             >seq9\nCGTACGTACGTA\n\
                             >seq10\nGATCGATCGATC\n";
-    
+
         // Write content to provided temporary file
-        temp_file.as_file_mut().write_all(fasta_content.as_bytes())?;
-    
+        temp_file
+            .as_file_mut()
+            .write_all(fasta_content.as_bytes())?;
+
         Ok(())
     }
-    
+
     #[test]
     fn test_generate_mapped_fastq_se_stdout() {
         // Create the temporary file
         let mut temp_file = NamedTempFile::new().unwrap();
-        
+
         // Populate the file with test data
         create_test_fasta(&mut temp_file).unwrap();
 
@@ -679,14 +668,20 @@ mod tests {
         let coverage = 2;
 
         let output = OutputDest::new(None).unwrap();
-        generate_mapped_fastq_se(temp_file.path().to_str().unwrap(), sequence_size, coverage, output).unwrap();
+        generate_mapped_fastq_se(
+            temp_file.path().to_str().unwrap(),
+            sequence_size,
+            coverage,
+            output,
+        )
+        .unwrap();
     }
 
     #[test]
     fn test_generate_mapped_fastq_se_to_file() {
         // Create the temporary file
         let mut temp_file = NamedTempFile::new().unwrap();
-        
+
         // Populate the file with test data
         create_test_fasta(&mut temp_file).unwrap();
 
@@ -699,7 +694,13 @@ mod tests {
 
         // Create OutputDest with the temporary file path
         let output = OutputDest::new(Some(temp_output_path.clone())).unwrap();
-        generate_mapped_fastq_se(temp_file.path().to_str().unwrap(), sequence_size, coverage, output).unwrap();
+        generate_mapped_fastq_se(
+            temp_file.path().to_str().unwrap(),
+            sequence_size,
+            coverage,
+            output,
+        )
+        .unwrap();
         assert!(temp_output_path.exists(), "Temporary file was not created");
 
         // Read the content of the file
@@ -713,7 +714,7 @@ mod tests {
     fn test_generate_mapped_fastq_pe_stdout() {
         // Create the temporary file
         let mut temp_file = NamedTempFile::new().unwrap();
-        
+
         // Populate the file with test data
         create_test_fasta(&mut temp_file).unwrap();
 
@@ -722,14 +723,21 @@ mod tests {
         let coverage = 2;
 
         let output = OutputDest::new(None).unwrap();
-        generate_mapped_fastq_pe(temp_file.path().to_str().unwrap(), sequence_size, insertion_size, coverage, output).unwrap();
+        generate_mapped_fastq_pe(
+            temp_file.path().to_str().unwrap(),
+            sequence_size,
+            insertion_size,
+            coverage,
+            output,
+        )
+        .unwrap();
     }
 
     #[test]
     fn test_generate_mapped_fastq_pe_to_file() {
         // Create the temporary file
         let mut temp_file = NamedTempFile::new().unwrap();
-        
+
         // Populate the file with test data
         create_test_fasta(&mut temp_file).unwrap();
 
@@ -743,7 +751,14 @@ mod tests {
 
         // Create OutputDest with the temporary file path
         let output = OutputDest::new(Some(temp_output_path.clone())).unwrap();
-        generate_mapped_fastq_pe(temp_file.path().to_str().unwrap(), sequence_size, insertion_size, coverage, output).unwrap();
+        generate_mapped_fastq_pe(
+            temp_file.path().to_str().unwrap(),
+            sequence_size,
+            insertion_size,
+            coverage,
+            output,
+        )
+        .unwrap();
         assert!(temp_output_path.exists(), "Temporary file was not created");
 
         // Read the content of the file
@@ -752,6 +767,4 @@ mod tests {
         // Add assertions to check the content
         assert!(content.starts_with("@"), "FASTQ file should start with @");
     }
-
 }
-

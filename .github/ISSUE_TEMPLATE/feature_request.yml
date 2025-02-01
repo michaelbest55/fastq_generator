@@ -1,0 +1,30 @@
+name: Feature request
+description: Suggest an idea for this project
+labels: ['C-enhancement']
+body:
+  - type: checkboxes
+    attributes:
+      label: Please complete the following tasks
+      options:
+        - label: I have searched the [open](https://github.com/michaelbest55/fastq_generator/issues) and [rejected](https://github.com/michaelbest55/fastq_generator/issues?q=is%3Aissue+label%3AS-wont-fix+is%3Aclosed) issues
+          required: true
+  - type: textarea
+    attributes:
+      label: Describe your use case
+      description: Describe the problem you're trying to solve. This is not mandatory and we *do* consider features without a specific use case, but real problems have priority.
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Describe the solution you'd like
+      description: Please explain what the wanted solution should look like. You are **strongly encouraged** to attach a snippet of (pseudo)code.
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Alternatives, if applicable
+      description: A clear and concise description of any alternative solutions or features you've managed to come up with.
+  - type: textarea
+    attributes:
+      label: Additional Context
+      description: Add any other context about the feature request here.
