@@ -37,7 +37,7 @@ jobs:
         build: [linux, windows, mac, minimal, next]
         include:
         - build: linux
-          os: buildjet-8vcpu-ubuntu-2204
+          os: ubuntu-22.04
           rust: "stable"
           features: "default"
         - build: windows
@@ -49,11 +49,11 @@ jobs:
           rust: "stable"
           features: "default"
         - build: minimal
-          os: buildjet-8vcpu-ubuntu-2204
+          os: ubuntu-22.04
           rust: "stable"
           features: "minimal"
         - build: next
-          os: buildjet-8vcpu-ubuntu-2204
+          os: ubuntu-22.04
           rust: "stable"
           features: "next"
     continue-on-error: ${{ matrix.rust != 'stable' }}
