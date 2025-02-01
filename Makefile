@@ -16,7 +16,7 @@ _FEATURES = minimal default debug release
 _FEATURES_minimal = --no-default-features --features "std"
 _FEATURES_default =
 _FEATURES_next = ${_FEATURES_default} --features unstable-v5
-_FEATURES_debug = ${_FEATURES_default} --features debug --features clap_complete/debug
+_FEATURES_debug = ${_FEATURES_default} --features debug
 _FEATURES_release = ${_FEATURES_default} --release
 
 check-wasm:

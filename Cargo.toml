@@ -26,7 +26,7 @@ maintenance = {status = "actively-developed"}
 
 [dependencies]
 clap = { version = "4.5", features = ["cargo"] }
-rand = "0.8"
+rand = { version = "0.8", features = ["std", "js"] }
 tempfile = "3.8"
 
 [build-dependencies]
