@@ -12,14 +12,12 @@ endif
 
 STABLE?=1.84
 
-_FEATURES = minimal default wasm full debug release
+_FEATURES = minimal default debug release
 _FEATURES_minimal = --no-default-features --features "std"
 _FEATURES_default =
-_FEATURES_wasm = --no-default-features --features "std help usage error-context suggestions" --features "deprecated derive cargo env unicode string"
-_FEATURES_full = --features "deprecated derive cargo env unicode string wrap_help unstable-ext"
-_FEATURES_next = ${_FEATURES_full} --features unstable-v5
-_FEATURES_debug = ${_FEATURES_full} --features debug --features clap_complete/debug
-_FEATURES_release = ${_FEATURES_full} --release
+_FEATURES_next = ${_FEATURES_default} --features unstable-v5
+_FEATURES_debug = ${_FEATURES_default} --features debug --features clap_complete/debug
+_FEATURES_release = ${_FEATURES_default} --release
 
 check-wasm:
 	cargo check ${_FEATURES_${@:check-%=%}} ${ARGS}

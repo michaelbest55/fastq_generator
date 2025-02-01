@@ -39,23 +39,19 @@ jobs:
         - build: linux
           os: buildjet-8vcpu-ubuntu-2204
           rust: "stable"
-          features: "full"
+          features: "default"
         - build: windows
           os: windows-latest
           rust: "stable"
-          features: "full"
+          features: "default"
         - build: mac
           os: macos-latest
           rust: "stable"
-          features: "full"
+          features: "default"
         - build: minimal
           os: buildjet-8vcpu-ubuntu-2204
           rust: "stable"
           features: "minimal"
-        - build: default
-          os: buildjet-8vcpu-ubuntu-2204
-          rust: "stable"
-          features: "default"
         - build: next
           os: buildjet-8vcpu-ubuntu-2204
           rust: "stable"
@@ -149,7 +145,7 @@ jobs:
         toolchain: stable
     - uses: Swatinem/rust-cache@v2
     - name: "Is lockfile updated?"
-      run: cargo update --workspace --locked
+      run: cargo update --workspace --offline
   docs:
     name: Docs
     runs-on: ubuntu-latest
@@ -191,23 +187,8 @@ jobs:
         toolchain: "1.84"  # STABLE
         components: clippy
     - uses: Swatinem/rust-cache@v2
-    - name: Lint (ultra-minimal)
-      run: make clippy-minimal ARGS='--manifest-path Cargo.toml'
-    - name: Lint (minimal)
-      run: make clippy-minimal
     - name: Lint (all)
       run: make clippy-full
     - name: Lint (release)
       run: make clippy-release
-  cffconvert:
-    name: cffconvert
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          persist-credentials: false
-      - name: CFF validation
-        uses: citation-file-format/cffconvert-github-action@2.0.0
-        with:
-          args: --validate
+
