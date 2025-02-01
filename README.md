@@ -5,7 +5,7 @@
 [![Documentation][docs-image]][docs-link]
 [![Dependency Status][deps-image]][deps-link]
 
-@TODO: about
+A simple cli tool for generating fastq files.
 
 <!-- markdown-toc start - Don't edit this section. Run M-x markdown-toc-refresh-toc -->
 **Table of Contents**
@@ -24,16 +24,17 @@
 
 ## The Pitch
 
-@TODO: pitch
+This project started at a time when I needed to generate a large number of fastq files quickly and with a large number of reads. I wanted a simple tool that could generate fastq files with a large number of reads quickly. I also wanted to learn
+more about Rust and how to write a simple CLI tool in Rust. This project is the result of that.
 
 ## The Anit-Pitch
 
-@TODO: anti-pitch
+As this is my first time writing in Rust, I am sure there are many things that could be done better. I am open to suggestions and PRs. 
 
 # Installation
 
-`{{crate_name}}` is a single binary that must be placed somewhere in your
-`$PATH`. One can either download 64-bit Linux binaries from [the Release Page](https://github.com/kbknapp/iptables_exporter/releases)
+`{{fastq-generator}}` is a single binary that must be placed somewhere in your
+`$PATH`. One can either download 64-bit Linux binaries from [the Release Page](https://github.com/michaelbest55/fastq-generator/releases)
 or one can also compile from source.
 
 ## Compile from Source
@@ -42,10 +43,10 @@ Ensure you have a [Rust toolchain installed](https://rustup.rs). Some of the
 dependencies also require `gcc` to be installed.
 
 ```
-$ git clone https://github.com/kbknapp/fastq-generator
+$ git clone https://github.com/michaelbest55/fastq-generator
 $ cd fastq-generator
 $ cargo build --release
-$ sudo cp target/release/{{crate_name}} /usr/local/bin/
+$ sudo cp target/release/{{fastq-generator}} /usr/local/bin/
 ```
 
 # Usage
@@ -53,23 +54,29 @@ $ sudo cp target/release/{{crate_name}} /usr/local/bin/
 ## Command Line Interface
 
 ```
-@TODO: cli usage
+# Reverse complement
+fastq_generator reverse_complement --input path/to/input.fasta --output path/to/output.fasta
+
+# Generate a FASTA file
+fastq_generator generate_fasta --sequence-size 100 --nb-seq 10 --output path/to/output.fasta
+
+# Generate random single-end FASTQ
+fastq_generator generate_random_fastq_se --sequence-size 50 --nb-seq 5 --output path/to/output.fastq
+
+# Generate random paired-end FASTQ
+fastq_generator generate_random_fastq_pe --sequence-size 50 --nb-seq 5 --output path/to/output.fastq
+
+# Generate mapped single-end FASTQ
+fastq_generator generate_mapped_fastq_se --ref-fasta path/to/reference.fasta --sequence-size 75 --coverage 10 --output path/to/output.fastq
+
+# Generate mapped paired-end FASTQ
+fastq_generator generate_mapped_fastq_pe --ref-fasta path/to/reference.fasta --sequence-size 75 --coverage 10 --insertion-size 300 --output path/to/output.fastq
 ```
 
 # License
 
-This crate is licensed under either of
+This crate is licensed under [MIT license](http://opensource.org/licenses/MIT).
 
- * [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0)
- * [MIT license](http://opensource.org/licenses/MIT)
-
-at your option.
-
-## Contribution
-
-Unless you explicitly state otherwise, any contribution intentionally submitted
-for inclusion in the work by you, as defined in the Apache-2.0 license, shall be
-dual licensed as above, without any additional terms or conditions.
 
 [//]: # (badges)
 
