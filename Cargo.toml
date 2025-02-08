@@ -14,7 +14,7 @@ description = ""
 repository = "https://github.com/michaelbest55/fastq-generator"
 documentation = "https://docs.rs/fastq-generator/"
 keywords = []
-categories = ["command-line-utilities"]
+categories = ["command-line-utilities", "bioinformatics"]
 license = "MIT"
 readme = "README.md"
 
@@ -26,7 +26,7 @@ maintenance = {status = "actively-developed"}
 
 [dependencies]
 clap = { version = "4.5", features = ["cargo"] }
-rand = "0.8"
+rand = { version = "0.8", features = ["std"] }
 tempfile = "3.8"
 
 [build-dependencies]
@@ -39,6 +39,7 @@ debug       = [] # Enables debug messages
 doc         = [] # All the features which add to documentation
 
 [profile.dev]
+opt-level = 0
 debug = true
 
 [profile.test]
@@ -49,6 +50,9 @@ debug = true
 lto = true
 codegen-units = 1
 
+[profile.release]
+opt-level = 3
+
 [package.metadata.docs.rs]
 features = ["doc"]
 targets = ["x86_64-unknown-linux-gnu"]
@@ -57,3 +61,5 @@ targets = ["x86_64-unknown-linux-gnu"]
 name = "fastq_generator"
 path = "src/fastq_generator.rs"
 
+[workspace.metadata.cargo-clippy]
+args = ["--all-targets", "--", "-D", "warnings", "-A", "deprecated"]

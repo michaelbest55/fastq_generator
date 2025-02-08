@@ -1,11 +1,12 @@
 name: pre-commit
 
-permissions: {} # none
+permissions:
+  contents: read
 
 on:
   pull_request:
   push:
-    branches: [master]
+    branches: [main]
 
 env:
   RUST_BACKTRACE: 1

@@ -25,6 +25,7 @@ repos:
     -   id: fmt
     -   id: cargo-check
     -   id: clippy
+        args: ["--all-targets", "--", "-D", "warnings", "-A", "deprecated"]
   - repo: https://github.com/crate-ci/typos
     rev: v1.16.20
     hooks:
