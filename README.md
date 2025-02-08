@@ -25,9 +25,12 @@ more about Rust and how to write a simple CLI tool in Rust. This project is the 
 
 # Installation
 
+```
+cargo install fastq-generator
+```
+
 `fastq-generator` is a single binary that must be placed somewhere in your
-`$PATH`. One can either download 64-bit Linux binaries from [the Release Page](https://github.com/michaelbest55/fastq-generator/releases)
-or one can also compile from source.
+`$PATH`.
 
 ## Compile from Source
 
