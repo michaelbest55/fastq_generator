@@ -6,13 +6,16 @@ use std::io::{self, BufRead, BufReader, BufWriter, Write};
 use std::path::PathBuf;
 use std::process;
 
-/// Represents where output should be written
+/// Represents where output should be written. Supports stdout or writing to a file.
 enum OutputDest {
+    /// Wraps a buffered writer for stdout.
     Stdout(BufWriter<io::Stdout>),
+    /// Wraps a buffered writer for a file.
     File(BufWriter<File>),
 }
 
 impl Write for OutputDest {
+    /// Writes the given buffer into the underlying writer.
     fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
         match self {
             OutputDest::Stdout(writer) => writer.write(buf),
@@ -20,6 +23,7 @@ impl Write for OutputDest {
         }
     }
 
+    /// Flushes the underlying writer.
     fn flush(&mut self) -> io::Result<()> {
         match self {
             OutputDest::Stdout(writer) => writer.flush(),
@@ -29,6 +33,16 @@ impl Write for OutputDest {
 }
 
 impl OutputDest {
+    /// Creates a new `OutputDest` from an optional file path.
+    ///
+    /// # Arguments
+    ///
+    /// * `path` - An optional `PathBuf`. If `Some`, the output will be written to that file;
+    ///            otherwise, output is written to stdout.
+    ///
+    /// # Returns
+    ///
+    /// Returns an `io::Result<Self>` representing either the created `OutputDest` or an error.
     fn new(path: Option<PathBuf>) -> io::Result<Self> {
         match path {
             Some(path) => Ok(OutputDest::File(BufWriter::new(File::create(path)?))),
@@ -36,6 +50,15 @@ impl OutputDest {
         }
     }
 
+    /// Writes an entire buffer into the underlying writer.
+    ///
+    /// # Arguments
+    ///
+    /// * `buf` - A byte slice representing the data to be written.
+    ///
+    /// # Returns
+    ///
+    /// Returns an `io::Result<()>` indicating success or an error.
     #[allow(dead_code)]
     fn write_all(&mut self, buf: &[u8]) -> io::Result<()> {
         match self {
@@ -45,9 +68,22 @@ impl OutputDest {
     }
 }
 
-/// Takes a DNA sequence and returns its reverse complement
-/// This function is used both for the reverse_complement subcommand
-/// and within the FASTQ generation functions
+/// Returns the reverse complement of a DNA sequence.
+///
+/// This function converts the input sequence to uppercase, maps each nucleotide to its complement,
+/// and then reverses the result.
+///
+/// # Arguments
+///
+/// * `sequence` - A string slice containing the DNA sequence.
+///
+/// # Examples
+///
+/// ```
+/// let rc = reverse_complement("ATCG");
+/// assert_eq!(rc, "CGAT");
+/// ```
+///
 fn reverse_complement(sequence: &str) -> String {
     let sequence = sequence.to_uppercase();
 
@@ -65,7 +101,20 @@ fn reverse_complement(sequence: &str) -> String {
     complement.chars().rev().collect()
 }
 
-/// Processes stdin for the reverse_complement subcommand
+/// Processes input to generate reverse complements for each DNA sequence.
+///
+/// Reads from either a file (if provided) or stdin, computes the reverse complement for
+/// lines that do not start with '>', and writes the results to output (file or stdout).
+///
+/// # Arguments
+///
+/// * `input` - An `Option<PathBuf>` specifying the input file path; if `None`, reads from stdin.
+/// * `output` - An `Option<PathBuf>` specifying the output file path; if `None`, writes to stdout.
+///
+/// # Returns
+///
+/// Returns an `io::Result<()>` indicating success or an error.
+///
 fn process_reverse_complement(input: Option<PathBuf>, output: Option<PathBuf>) -> io::Result<()> {
     let input_reader: Box<dyn BufRead> = match input {
         Some(path) => Box::new(BufReader::new(File::open(path)?)),
@@ -88,7 +137,16 @@ fn process_reverse_complement(input: Option<PathBuf>, output: Option<PathBuf>) -
     Ok(())
 }
 
-/// Generates a random DNA sequence of specified length
+/// Generates a random DNA sequence of a specified length.
+///
+/// # Arguments
+///
+/// * `sequence_size` - The desired length of the DNA sequence.
+///
+/// # Returns
+///
+/// Returns a `String` containing the random DNA sequence.
+///
 fn generate_dna(sequence_size: usize) -> String {
     let nucleotides = ['A', 'C', 'G', 'T'];
     let mut rng = rand::thread_rng();
@@ -98,7 +156,20 @@ fn generate_dna(sequence_size: usize) -> String {
         .collect()
 }
 
-/// Generates and prints a FASTA format sequence
+/// Generates and writes a FASTA formatted file with random DNA sequences.
+///
+/// For each sequence, writes a header (`>seq_N`) and a generated DNA sequence.
+///
+/// # Arguments
+///
+/// * `sequence_size` - Length of each DNA sequence.
+/// * `nb_seq` - Number of sequences to generate.
+/// * `output` - An `OutputDest` where the FASTA content is written.
+///
+/// # Returns
+///
+/// Returns an `io::Result<()>` indicating success or error.
+///
 fn generate_fasta(sequence_size: usize, nb_seq: usize, mut output: OutputDest) -> io::Result<()> {
     for i in 1..=nb_seq {
         writeln!(output, ">seq_{}", i)?;
@@ -107,7 +178,20 @@ fn generate_fasta(sequence_size: usize, nb_seq: usize, mut output: OutputDest) -
     output.flush()
 }
 
-/// Generates and prints a FASTQ format sequence
+/// Generates and writes a single FASTQ formatted sequence.
+///
+/// Writes a header, the DNA sequence, a plus sign, and a quality string (defaulting to 'I').
+///
+/// # Arguments
+///
+/// * `sequence` - The DNA sequence as a string slice.
+/// * `header` - The header for the sequence (includes '@').
+/// * `output` - A mutable reference to an `OutputDest` for writing the sequence.
+///
+/// # Returns
+///
+/// Returns an `io::Result<()>` indicating success or error.
+///
 fn generate_fastq_seq(sequence: &str, header: &str, output: &mut OutputDest) -> io::Result<()> {
     writeln!(output, "{}", header)?;
     writeln!(output, "{}", sequence)?;
@@ -116,7 +200,18 @@ fn generate_fastq_seq(sequence: &str, header: &str, output: &mut OutputDest) -> 
     Ok(())
 }
 
-/// Generates and prints multiple FASTQ format sequences with random sequences
+/// Generates and writes multiple FASTQ formatted sequences with random DNA sequences.
+///
+/// # Arguments
+///
+/// * `sequence_size` - Length of each DNA sequence.
+/// * `nb_seq` - Number of sequences to generate.
+/// * `output` - An `OutputDest` where the FASTQ data will be written.
+///
+/// # Returns
+///
+/// Returns an `io::Result<()>` indicating success or error.
+///
 fn generate_fastq(sequence_size: usize, nb_seq: usize, mut output: OutputDest) -> io::Result<()> {
     for index in 1..=nb_seq {
         let sequence = generate_dna(sequence_size);
@@ -126,7 +221,20 @@ fn generate_fastq(sequence_size: usize, nb_seq: usize, mut output: OutputDest) -
     output.flush()
 }
 
-/// Generates random single-end FASTQ sequences
+/// Generates and writes random single-end FASTQ sequences.
+///
+/// Each sequence gets a formatted header and a randomly generated DNA sequence.
+///
+/// # Arguments
+///
+/// * `sequence_size` - Length of each DNA sequence.
+/// * `nb_seq` - Number of sequences to generate.
+/// * `output` - An `OutputDest` where the FASTQ data will be written.
+///
+/// # Returns
+///
+/// Returns an `io::Result<()>` indicating success or error.
+///
 fn generate_random_fastq_se(
     sequence_size: usize,
     nb_seq: usize,
@@ -143,7 +251,20 @@ fn generate_random_fastq_se(
     output.flush()
 }
 
-/// Generates random paired-end FASTQ sequences
+/// Generates and writes random paired-end FASTQ sequences.
+///
+/// First writes the first read for each sequence, then the corresponding second read.
+///
+/// # Arguments
+///
+/// * `sequence_size` - Length of each DNA sequence.
+/// * `nb_seq` - Number of sequence pairs to generate.
+/// * `output` - An `OutputDest` where the FASTQ data will be written.
+///
+/// # Returns
+///
+/// Returns an `io::Result<()>` indicating success or error.
+///
 fn generate_random_fastq_pe(
     sequence_size: usize,
     nb_seq: usize,
@@ -165,7 +286,22 @@ fn generate_random_fastq_pe(
     output.flush()
 }
 
-/// Generates mapped single-end FASTQ sequences from a reference
+/// Generates and writes mapped single-end FASTQ sequences from a reference FASTA file.
+///
+/// Reads sequences from the reference file and prints sequence fragments with formatted headers.
+/// The sequences are broken into kmers of fixed length based on the provided coverage.
+///
+/// # Arguments
+///
+/// * `ref_fasta` - Path to the reference FASTA file as a string slice.
+/// * `sequence_size` - Length of each generated kmer.
+/// * `coverage` - The desired coverage level (number of passes over each sequence).
+/// * `output` - An `OutputDest` where the FASTQ data will be written.
+///
+/// # Returns
+///
+/// Returns an `io::Result<()>` indicating success or error.
+///
 fn generate_mapped_fastq_se(
     ref_fasta: &str,
     sequence_size: usize,
@@ -213,7 +349,24 @@ fn generate_mapped_fastq_se(
     Ok(())
 }
 
-/// Generates mapped paired-end FASTQ sequences from a reference
+/// Generates and writes mapped paired-end FASTQ sequences from a reference FASTA file.
+///
+/// Processes the reference and collects kmers to simulate paired-end reads.
+/// For each valid region, computes a forward read and the reverse complement of a corresponding region,
+/// then writes both to the output.
+///
+/// # Arguments
+///
+/// * `ref_fasta` - Path to the reference FASTA file as a string slice.
+/// * `sequence_size` - Length of each kmer.
+/// * `insertion_size` - Size of the insertion between paired-end reads.
+/// * `coverage` - The desired sequencing coverage.
+/// * `output` - An `OutputDest` where the FASTQ data will be written.
+///
+/// # Returns
+///
+/// Returns an `io::Result<()>` indicating success or error.
+///
 fn generate_mapped_fastq_pe(
     ref_fasta: &str,
     sequence_size: usize,
@@ -276,12 +429,31 @@ fn generate_mapped_fastq_pe(
     Ok(())
 }
 
+/// Prints an error message to stderr and exits the process.
+///
+/// # Arguments
+///
+/// * `msg` - The error message to display.
+///
+/// # Note
+///
+/// This function does not return.
+///
 fn exit_with_error(msg: &str) -> ! {
     eprintln!("Error: {}", msg);
     process::exit(1);
 }
 
-// Helper functions to add common arguments
+/// Adds the sequence size argument to a Clap command.
+///
+/// # Arguments
+///
+/// * `cmd` - A `clap::Command` to which the argument is added.
+///
+/// # Returns
+///
+/// Returns the modified `Command`.
+///
 fn add_sequence_size_arg(mut cmd: Command) -> Command {
     cmd = cmd.arg(
         Arg::new("sequence_size")
@@ -294,6 +466,16 @@ fn add_sequence_size_arg(mut cmd: Command) -> Command {
     cmd
 }
 
+/// Adds the number of sequences argument to a Clap command.
+///
+/// # Arguments
+///
+/// * `cmd` - A `clap::Command` to which the argument is added.
+///
+/// # Returns
+///
+/// Returns the modified `Command`.
+///
 fn add_nb_seq_arg(mut cmd: Command) -> Command {
     cmd = cmd.arg(
         Arg::new("nb_seq")
@@ -306,6 +488,16 @@ fn add_nb_seq_arg(mut cmd: Command) -> Command {
     cmd
 }
 
+/// Adds the coverage argument to a Clap command.
+///
+/// # Arguments
+///
+/// * `cmd` - A `clap::Command` to which the argument is added.
+///
+/// # Returns
+///
+/// Returns the modified `Command`.
+///
 fn add_coverage_arg(mut cmd: Command) -> Command {
     cmd = cmd.arg(
         Arg::new("coverage")
@@ -318,6 +510,16 @@ fn add_coverage_arg(mut cmd: Command) -> Command {
     cmd
 }
 
+/// Adds the reference FASTA argument to a Clap command.
+///
+/// # Arguments
+///
+/// * `cmd` - A `clap::Command` to which the argument is added.
+///
+/// # Returns
+///
+/// Returns the modified `Command`.
+///
 fn add_ref_fasta_arg(mut cmd: Command) -> Command {
     cmd = cmd.arg(
         Arg::new("ref_fasta")
@@ -329,7 +531,16 @@ fn add_ref_fasta_arg(mut cmd: Command) -> Command {
     cmd
 }
 
-// Helper function for adding output argument to commands
+/// Adds the output file argument to a Clap command.
+///
+/// # Arguments
+///
+/// * `cmd` - A `clap::Command` to which the argument is added.
+///
+/// # Returns
+///
+/// Returns the modified `Command`.
+///
 fn add_output_arg(cmd: Command) -> Command {
     cmd.arg(
         Arg::new("output")
@@ -341,6 +552,14 @@ fn add_output_arg(cmd: Command) -> Command {
     )
 }
 
+/// Main entry point for the application.
+///
+/// Sets up the CLI with subcommands and arguments, then executes the chosen functionality.
+///
+/// # Returns
+///
+/// Returns a `Result<(), Box<dyn Error>>` indicating success or error.
+///
 fn main() -> Result<(), Box<dyn Error>> {
     let matches = Command::new("dna_tools")
         .version("1.0")
