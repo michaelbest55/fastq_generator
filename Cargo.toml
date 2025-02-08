@@ -1,6 +1,6 @@
 [package]
 name = "fastq-generator"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 authors = [
 	"Michael Best <michaelbest55@gmail.com>",
@@ -13,8 +13,8 @@ include = [
 description = "A fastq generator for generation of synthetic fastq files."
 repository = "https://github.com/michaelbest55/fastq-generator"
 documentation = "https://docs.rs/fastq-generator/"
-keywords = []
-categories = ["command-line-utilities", "bioinformatics"]
+keywords = ["bioinformatics", "fastq"]
+categories = ["command-line-utilities", "science"]
 license = "MIT"
 readme = "README.md"
 
@@ -26,7 +26,7 @@ maintenance = {status = "actively-developed"}
 
 [dependencies]
 clap = { version = "4.5", features = ["cargo"] }
-rand = { version = "0.8", features = ["std"] }
+rand = { version = "0.9", features = ["std"] }
 tempfile = "3.8"
 
 [build-dependencies]
@@ -58,6 +58,10 @@ features = ["doc"]
 targets = ["x86_64-unknown-linux-gnu"]
 
 [[bin]]
+name = "fastq_generator"
+path = "src/bin.rs"
+
+[lib]
 name = "fastq_generator"
 path = "src/fastq_generator.rs"
 

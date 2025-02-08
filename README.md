@@ -11,8 +11,6 @@ A simple cli tool for generating fastq files.
 **Table of Contents**
 
 - [`fastq-generator`](#project-name)
-    - [The Pitch](#the-pitch)
-    - [The Anit-Pitch](#the-anit-pitch)
 - [Installation](#installation)
     - [Compile from Source](#compile-from-source)
 - [Usage](#usage)
@@ -22,18 +20,12 @@ A simple cli tool for generating fastq files.
 
 <!-- markdown-toc end -->
 
-## The Pitch
-
 This project started at a time when I needed to generate a large number of fastq files quickly and with a large number of reads. I wanted a simple tool that could generate fastq files with a large number of reads quickly. I also wanted to learn
-more about Rust and how to write a simple CLI tool in Rust. This project is the result of that.
-
-## The Anit-Pitch
-
-As this is my first time writing in Rust, I am sure there are many things that could be done better. I am open to suggestions and PRs. 
+more about Rust and how to write a simple CLI tool in Rust. This project is the result of that. As this is my first time writing in Rust, I am sure there are many things that could be done better. I am open to suggestions and PRs. 
 
 # Installation
 
-`{{fastq-generator}}` is a single binary that must be placed somewhere in your
+`fastq-generator` is a single binary that must be placed somewhere in your
 `$PATH`. One can either download 64-bit Linux binaries from [the Release Page](https://github.com/michaelbest55/fastq-generator/releases)
 or one can also compile from source.
 
@@ -46,12 +38,10 @@ dependencies also require `gcc` to be installed.
 $ git clone https://github.com/michaelbest55/fastq-generator
 $ cd fastq-generator
 $ cargo build --release
-$ sudo cp target/release/{{fastq-generator}} /usr/local/bin/
+$ sudo cp target/release/fastq-generator /usr/local/bin/
 ```
 
 # Usage
-
-## Command Line Interface
 
 ```
 # Reverse complement
@@ -84,5 +74,5 @@ This crate is licensed under [MIT license](http://opensource.org/licenses/MIT).
 [crate-link]: https://crates.io/crates/fastq-generator
 [docs-image]: https://docs.rs/fastq-generator/badge.svg
 [docs-link]: https://docs.rs/fastq-generator
-[deps-image]: https://deps.rs/repo/github/kbknapp/fastq-generator/status.svg
-[deps-link]: https://deps.rs/repo/github/kbknapp/fastq-generator
+[deps-image]: https://deps.rs/repo/github/michaelbest55/fastq-generator/status.svg
+[deps-link]: https://deps.rs/repo/github/michaelbest55/fastq-generator
